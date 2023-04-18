@@ -65,7 +65,7 @@ async def get_videos_urls(url: str, output_dir: str, cache_videos: list[str], **
                 url_month = url_year + month
                 response = await fetch(session=session, url=url_month)
                 days = [*filter(lambda x: re.match(r"^\d{2}/$", x), get_urls(response=response))]
-                for day in days:
+                for day in days[:1]:
                     url_day = url_month + day
                     response = await fetch(session=session, url=url_day)
 
@@ -149,12 +149,12 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     parser = argparse.ArgumentParser(description=f"Preprocess videos from SmartBay: {URL}")
-    parser.add_argument("-o", "--Output", help="Output directory", default="frames")
-    parser.add_argument("-c", "--Cache", help="Cache file", default=".cache")
-    parser.add_argument("-f", "--Frequency", help="Frequency in seconds (save a frame every n seconds)", default=60)
-    parser.add_argument("-p", "--Processes", help="Number of processes", default=multiprocessing.cpu_count())
-    parser.add_argument("-a", "--Attempts", help="Number of retry attempts", default=5)
-    parser.add_argument("-st", "--StartTimeout", help="Retry start timeout", default=0.5)
+    parser.add_argument("-o", "--Output", type=str, help="Output directory", default="frames")
+    parser.add_argument("-c", "--Cache", type=str, help="Cache file", default=".cache")
+    parser.add_argument("-f", "--Frequency", type=float, help="Frequency in seconds (save a frame every n seconds)", default=60.0)
+    parser.add_argument("-p", "--Processes", type=int, help="Number of processes", default=multiprocessing.cpu_count())
+    parser.add_argument("-a", "--Attempts", type=int, help="Number of retry attempts", default=5)
+    parser.add_argument("-st", "--StartTimeout", type=float, help="Retry start timeout", default=0.5)
 
     args = parser.parse_args()
 
