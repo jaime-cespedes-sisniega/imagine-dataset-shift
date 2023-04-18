@@ -65,7 +65,7 @@ async def get_videos_urls(url: str, output_dir: str, cache_videos: list[str], **
                 url_month = url_year + month
                 response = await fetch(session=session, url=url_month)
                 days = [*filter(lambda x: re.match(r"^\d{2}/$", x), get_urls(response=response))]
-                for day in days[:1]:
+                for day in days:
                     url_day = url_month + day
                     response = await fetch(session=session, url=url_day)
 
