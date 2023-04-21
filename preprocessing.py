@@ -86,7 +86,6 @@ async def get_videos_urls(url: str, output_dir: str, cache_videos: list[str], **
 
 
 def preprocess_video_frames(video: tuple[str, Path], frequency: float, cache_file_dir: Path, default_fps: int) -> None:
-    logger.info(f"Processing {video[0]}")
     url, frames_path = video
     cap = cv2.VideoCapture(url)
 
