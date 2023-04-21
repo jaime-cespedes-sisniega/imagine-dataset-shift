@@ -85,14 +85,17 @@ async def get_videos_urls(url: str, output_dir: str, cache_videos: list[str], **
     return videos
 
 
-def preprocess_video_frames(video: tuple[str, Path], frequency: float, cache_file_dir: Path) -> None:
+def preprocess_video_frames(video: tuple[str, Path], frequency: float, cache_file_dir: Path, default_fps: int) -> None:
+    logger.info(f"Processing {video[0]}")
     url, frames_path = video
     cap = cv2.VideoCapture(url)
 
     frames_path = str(frames_path)
     frames_count = 0
-    # # Workaround for videos that stuck in an infinite loop
+    # # Workaround for videos with wrong fps
     fps = int(cap.get(cv2.CAP_PROP_FPS))
+    fps = fps if fps > 0 else default_fps
+    # # Workaround for videos that stuck in an infinite loop
     video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     skip_frames = math.ceil(fps * frequency)
     frames_expected = math.ceil(video_length / skip_frames)
@@ -112,10 +115,10 @@ def preprocess_video_frames(video: tuple[str, Path], frequency: float, cache_fil
 
     with open(cache_file_dir, "a") as f:
         f.write(f"{url}\n")
-    logger.info(f"Processed {url} at {fps} fps.")
+    logger.info(f"Processed {frames_obtained} frames of {url} at {fps} fps.")
 
 
-async def main(url: str, output_dir: str, cache_file: str, frequency: float, num_processes: int, **kwargs) -> None:
+async def main(url: str, output_dir: str, cache_file: str, frequency: float, num_processes: int, default_fps: int, **kwargs) -> None:
     cache_file_dir = Path(output_dir, cache_file)
     cache_videos = _get_cache_videos(cache_file_dir=cache_file_dir)
 
@@ -133,6 +136,7 @@ async def main(url: str, output_dir: str, cache_file: str, frequency: float, num
                 preprocess_video_frames,
                 frequency=frequency,
                 cache_file_dir=cache_file_dir,
+                default_fps=default_fps,
             ),
             videos,
         )
@@ -152,9 +156,11 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--Output", type=str, help="Output directory", default="frames")
     parser.add_argument("-c", "--Cache", type=str, help="Cache file", default=".cache")
     parser.add_argument("-f", "--Frequency", type=float, help="Frequency in seconds (save a frame every n seconds)", default=60.0)
-    parser.add_argument("-p", "--Processes", type=int, help="Number of processes", default=multiprocessing.cpu_count())
+    parser.add_argument("-p", "--Processes", type=int, help="Number of processes", default=1)
     parser.add_argument("-a", "--Attempts", type=int, help="Number of retry attempts", default=5)
     parser.add_argument("-st", "--StartTimeout", type=float, help="Retry start timeout", default=0.5)
+    parser.add_argument("-dfps", "--DefaultFPS", type=int, help="Default FPS in case that FPS cannot be obtained",
+                        default=25)
 
     args = parser.parse_args()
 
@@ -167,5 +173,6 @@ if __name__ == "__main__":
             num_processes=args.Processes,
             attempts=args.Attempts,
             start_timeout=args.StartTimeout,
+            default_fps=args.DefaultFPS,
         ),
     )
